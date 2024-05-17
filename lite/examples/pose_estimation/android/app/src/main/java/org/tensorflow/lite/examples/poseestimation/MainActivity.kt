@@ -20,23 +20,38 @@ import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.Outline
+import android.graphics.Rect
+import android.net.Uri
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.Process
 import android.view.SurfaceView
 import android.view.View
+import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView;
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.poseestimation.camera.CameraSource
 import org.tensorflow.lite.examples.poseestimation.data.Device
 import org.tensorflow.lite.examples.poseestimation.ml.*
+import kotlin.math.min
+
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -158,6 +173,30 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         openCamera()
+
+        // Create a TextView to display the message
+        val textView = TextView(this)
+        textView.textSize = 24f
+        textView.setTextColor(Color.BLACK)
+        val layoutParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP)
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT)
+        addContentView(textView, layoutParams)
+
+        val playerView = findViewById<PlayerView>(R.id.playerView)
+        val playerViewManager = PlayerViewManager(this, playerView)
+        playerViewManager.setupPlayerView()
+
+        object : CountDownTimer(10000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                textView.text = "Starting in... " + (millisUntilFinished / 1000).toString()
+            }
+
+            override fun onFinish() {
+                textView.text = "Started."
+                playerViewManager.hidePlayerView()
+            }
+        }.start()
     }
 
     override fun onResume() {
